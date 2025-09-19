@@ -30,7 +30,7 @@ const parsedEnvArg = () => {
   }
   return { ...process.env, ...envArgs };
 };
-const { supersetPort = 8088, superset: supersetUrl = null } = parsedEnvArg();
+const { supersetPort = 8000, superset: supersetUrl = null } = parsedEnvArg();
 const backend = (supersetUrl || `http://localhost:${supersetPort}`).replace(
   '//+$/',
   '',

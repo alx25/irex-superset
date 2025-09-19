@@ -60,7 +60,7 @@ const {
 // Precedence: CLI args > env vars > defaults
 const devserverPort = cliPort || process.env.WEBPACK_DEVSERVER_PORT || 9000;
 const devserverHost =
-  cliHost || process.env.WEBPACK_DEVSERVER_HOST || '127.0.0.1';
+  cliHost || process.env.WEBPACK_DEVSERVER_HOST || '0.0.0.0';
 
 const isDevMode = mode !== 'production';
 const isDevServer = process.argv[1].includes('webpack-dev-server');
