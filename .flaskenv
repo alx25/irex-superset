@@ -16,3 +16,5 @@
 #
 FLASK_APP="superset.app:create_app()"
 FLASK_DEBUG=true
+FLASK_RUN_HOST=0.0.0.0
+FLASK_RUN_PORT=8000

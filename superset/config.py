@@ -204,13 +204,13 @@ SQLALCHEMY_TRACK_MODIFICATIONS = False
 # or use `SUPERSET_SECRET_KEY` environment variable.
 # Use a strong complex alphanumeric string and use a tool to help you generate
 # a sufficiently random sequence, ex: openssl rand -base64 42"
-SECRET_KEY = os.environ.get("SUPERSET_SECRET_KEY") or CHANGE_ME_SECRET_KEY
+SECRET_KEY = os.environ.get("SUPERSET_SECRET_KEY") or "bguNdeaEO8Q6n06vnK94NwlN0w87mGI/c8VO7KXD9hzj7csSSy+hKuwf"
 
 # The SQLAlchemy connection string.
-SQLALCHEMY_DATABASE_URI = (
-    f"""sqlite:///{os.path.join(DATA_DIR, "superset.db")}?check_same_thread=false"""
-)
-
+# SQLALCHEMY_DATABASE_URI = (
+#     f"""sqlite:///{os.path.join(DATA_DIR, "superset.db")}?check_same_thread=false"""
+# )
+SQLALCHEMY_DATABASE_URI = 'postgresql://superset:superset@localhost/superset6'
 # SQLALCHEMY_DATABASE_URI = 'mysql://myapp@localhost/myapp'
 # SQLALCHEMY_DATABASE_URI = 'postgresql://root:password@localhost/myapp'
 
@@ -501,7 +501,7 @@ DEFAULT_FEATURE_FLAGS: dict[str, bool] = {
     # When using a recent version of Druid that supports JOINs turn this on
     "DRUID_JOINS": False,
     "DYNAMIC_PLUGINS": False,
-    "ENABLE_TEMPLATE_PROCESSING": False,
+    "ENABLE_TEMPLATE_PROCESSING": True,
     # Allow for javascript controls components
     # this enables programmers to customize certain charts (like the
     # geospatial ones) by inputting javascript in controls. This exposes
@@ -514,7 +514,7 @@ DEFAULT_FEATURE_FLAGS: dict[str, bool] = {
     # and doesn't work with all nested types.
     "PRESTO_EXPAND_DATA": False,
     # Exposes API endpoint to compute thumbnails
-    "THUMBNAILS": False,
+    "THUMBNAILS": True,
     # Enables the endpoints to cache and retrieve dashboard screenshots via webdriver.
     # Requires configuring Celery and a cache using THUMBNAIL_CACHE_CONFIG.
     "ENABLE_DASHBOARD_SCREENSHOT_ENDPOINTS": False,
@@ -523,11 +523,11 @@ DEFAULT_FEATURE_FLAGS: dict[str, bool] = {
     # This feature flag is used by the download feature in the dashboard view.
     # It is dependent on ENABLE_DASHBOARD_SCREENSHOT_ENDPOINT being enabled.
     "ENABLE_DASHBOARD_DOWNLOAD_WEBDRIVER_SCREENSHOT": False,
-    "TAGGING_SYSTEM": False,
+    "TAGGING_SYSTEM": True,
     "SQLLAB_BACKEND_PERSISTENCE": True,
     "LISTVIEWS_DEFAULT_CARD_VIEW": False,
     # When True, this escapes HTML (rather than rendering it) in Markdown components
-    "ESCAPE_MARKDOWN_HTML": False,
+    "ESCAPE_MARKDOWN_HTML": True,
     "DASHBOARD_VIRTUALIZATION": True,
     # This feature flag is stil in beta and is not recommended for production use.
     "GLOBAL_ASYNC_QUERIES": False,
@@ -537,7 +537,7 @@ DEFAULT_FEATURE_FLAGS: dict[str, bool] = {
     "ALERT_REPORT_TABS": False,
     "ALERT_REPORTS_FILTER": False,
     "ALERT_REPORT_SLACK_V2": False,
-    "DASHBOARD_RBAC": False,
+    "DASHBOARD_RBAC": True,
     "ENABLE_ADVANCED_DATA_TYPES": False,
     # Enabling ALERTS_ATTACH_REPORTS, the system sends email and slack message
     # with screenshot and link
@@ -567,7 +567,7 @@ DEFAULT_FEATURE_FLAGS: dict[str, bool] = {
     "EMBEDDABLE_CHARTS": True,
     "DRILL_TO_DETAIL": True,  # deprecated
     "DRILL_BY": True,
-    "DATAPANEL_CLOSED_BY_DEFAULT": False,
+    "DATAPANEL_CLOSED_BY_DEFAULT": True,
     # When you open the dashboard, the filter panel will be closed
     "FILTERBAR_CLOSED_BY_DEFAULT": False,
     # The feature is off by default, and currently only supported in Presto and Postgres,  # noqa: E501
@@ -948,7 +948,7 @@ CORS_OPTIONS: dict[Any, Any] = {
 # Disabling this option is not recommended for security reasons. If you wish to allow
 # valid safe elements that are not included in the default sanitization schema, use the
 # HTML_SANITIZATION_SCHEMA_EXTENSIONS configuration.
-HTML_SANITIZATION = False
+HTML_SANITIZATION = True
 
 # Use this configuration to extend the HTML sanitization schema.
 # By default we use the GitHub schema defined in
@@ -964,7 +964,22 @@ HTML_SANITIZATION = False
 #   }
 # }
 # Be careful when extending the default schema to avoid XSS attacks.
-HTML_SANITIZATION_SCHEMA_EXTENSIONS: dict[str, Any] = {}
+HTML_SANITIZATION_SCHEMA_EXTENSIONS = {
+    # Etiquetas que necesitas renderizar
+    "tagNames": [
+        "ul", "ol", "li", "span", "div", "style"
+    ],
+    # Atributos permitidos por etiqueta
+    "attributes": {
+        "*": ["class", "className", "style", "id"],
+        # Si usas inline styles en <style>, a veces piden el type
+        "style": ["type"],
+        # Ejemplo: permitir value en <li> si numeras manualmente
+        "li": ["value"],
+    },
+    # (Opcional) Protocolos extra, p.ej. si insertas href/ftp
+    # "protocols": { "href": ["http", "https", "mailto"] },
+}
 
 # Chrome allows up to 6 open connections per domain at a time. When there are more
 # than 6 slices in dashboard, a lot of time fetch requests are queued up and wait for
@@ -1342,7 +1357,14 @@ READ_CSV_CHUNK_SIZE = 1000
 # It's important to make sure that the objects exposed (as well as objects attached
 # to those objects) are harmless. We recommend only exposing simple/pure functions that
 # return native types.
-JINJA_CONTEXT_ADDONS: dict[str, Callable[..., Any]] = {}
+from datetime import datetime
+    
+JINJA_CONTEXT_ADDONS = {
+    # Devuelve el año actual como entero
+    "current_month": lambda: datetime.now().month,
+    "current_year": lambda: datetime.now().year,
+    
+}
 
 # A dictionary of macro template processors (by engine) that gets merged into global
 # template processors. The existing template processors get updated with this
@@ -2181,47 +2203,47 @@ EXTENSIONS_PATH: str | None = None
 # -------------------------------------------------------------------
 # Don't add config values below this line since local configs won't be
 # able to override them.
-if CONFIG_PATH_ENV_VAR in os.environ:
-    # Explicitly import config module that is not necessarily in pythonpath; useful
-    # for case where app is being executed via pex.
-    cfg_path = os.environ[CONFIG_PATH_ENV_VAR]
-    try:
-        module = sys.modules[__name__]
-        spec = importlib.util.spec_from_file_location("superset_config", cfg_path)
-        override_conf = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(override_conf)
-        for key in dir(override_conf):
-            if key.isupper():
-                setattr(module, key, getattr(override_conf, key))
+# if CONFIG_PATH_ENV_VAR in os.environ:
+#     # Explicitly import config module that is not necessarily in pythonpath; useful
+#     # for case where app is being executed via pex.
+#     cfg_path = os.environ[CONFIG_PATH_ENV_VAR]
+#     try:
+#         module = sys.modules[__name__]
+#         spec = importlib.util.spec_from_file_location("superset_config", cfg_path)
+#         override_conf = importlib.util.module_from_spec(spec)
+#         spec.loader.exec_module(override_conf)
+#         for key in dir(override_conf):
+#             if key.isupper():
+#                 setattr(module, key, getattr(override_conf, key))
 
-        click.secho(f"Loaded your LOCAL configuration at [{cfg_path}]", fg="cyan")
-    except Exception:
-        logger.exception(
-            "Failed to import config for %s=%s", CONFIG_PATH_ENV_VAR, cfg_path
-        )
-        raise
-elif importlib.util.find_spec("superset_config"):
-    try:
-        # pylint: disable=import-error,wildcard-import,unused-wildcard-import
-        import superset_config
-        from superset_config import *  # noqa: F403, F401
+#         click.secho(f"Loaded your LOCAL configuration at [{cfg_path}]", fg="cyan")
+#     except Exception:
+#         logger.exception(
+#             "Failed to import config for %s=%s", CONFIG_PATH_ENV_VAR, cfg_path
+#         )
+#         raise
+# elif importlib.util.find_spec("superset_config"):
+#     try:
+#         # pylint: disable=import-error,wildcard-import,unused-wildcard-import
+#         import superset_config
+#         from superset_config import *  # noqa: F403, F401
 
-        click.secho(
-            f"Loaded your LOCAL configuration at [{superset_config.__file__}]",
-            fg="cyan",
-        )
-    except Exception:
-        logger.exception("Found but failed to import local superset_config")
-        raise
+#         click.secho(
+#             f"Loaded your LOCAL configuration at [{superset_config.__file__}]",
+#             fg="cyan",
+#         )
+#     except Exception:
+#         logger.exception("Found but failed to import local superset_config")
+#         raise
 
-# Final environment variable processing - must be at the very end
-# to override any config file assignments
-ENV_VAR_KEYS = {
-    "SUPERSET__SQLALCHEMY_DATABASE_URI",
-    "SUPERSET__SQLALCHEMY_EXAMPLES_URI",
-}
+# # Final environment variable processing - must be at the very end
+# # to override any config file assignments
+# ENV_VAR_KEYS = {
+#     "SUPERSET__SQLALCHEMY_DATABASE_URI",
+#     "SUPERSET__SQLALCHEMY_EXAMPLES_URI",
+# }
 
-for env_var in ENV_VAR_KEYS:
-    if env_var in os.environ:
-        config_var = env_var.replace("SUPERSET__", "")
-        globals()[config_var] = os.environ[env_var]
+# for env_var in ENV_VAR_KEYS:
+#     if env_var in os.environ:
+#         config_var = env_var.replace("SUPERSET__", "")
+#         globals()[config_var] = os.environ[env_var]
